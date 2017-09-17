@@ -28,17 +28,21 @@ class Colors(object):
     fg = "#eeeeee"
     add = "#00aa00"
     remove = "#aa0000"
-    change = "#999999"
+    change = "#ff8c00"
+
+    def __init__(self, conf):
+        for color in conf:
+            setattr(self, color, conf[color])
 
 class diffWindow(tkinter.Tk):
     def __init__(self, parent, handler, diff_mode='xml'):
         tkinter.Tk.__init__(self, parent)
+        self.read_conf()
         self.diff_mode = diff_mode
         self.geometry("1260x800+100+100")
-        self.colors = Colors()
+        self.colors = Colors(self.conf.get('colors', {}))
         self.configure(background=self.colors.bg)
         self.parent = parent
-        self.read_conf()
         self.init_handler(handler)
         self.init_window()
 

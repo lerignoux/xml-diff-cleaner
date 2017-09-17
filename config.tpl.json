@@ -1,0 +1,13 @@
+{
+  "p4": {
+    "username":"",
+    "password":""
+  },
+  "colors": {
+    "bg": "#555555",
+    "fg": "#eeeeee",
+    "add": "#00aa00",
+    "remove": "#aa0000",
+    "change": "#ff8c00"
+  }
+}
