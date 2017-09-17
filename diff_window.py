@@ -71,7 +71,7 @@ class diffWindow(tkinter.Tk):
             self.filesButtons[bIndex].grid(column=bIndex,row=0,sticky='W')
 
     def initializeDiffFrame(self):
-        self.columns = len(self.handler.listFiles())
+        self.columns = len(self.handler.listFiles()) + 1
 
     def updateUnidiffFrame(self, diffs):
         line = 0;
@@ -109,7 +109,7 @@ class diffWindow(tkinter.Tk):
                 self.labelSourceTitle = tkinter.StringVar()
                 label = tkinter.Label(self,
                     textvariable=self.labelSourceTitle,
-                    anchor="w", fg="white"
+                    anchor="w", fg=self.colors.fg, bg=self.colors.bg
                 )
                 label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
                 self.labelSourceTitle.set(part[0])
@@ -118,23 +118,33 @@ class diffWindow(tkinter.Tk):
                 if not part[1]:
                     label = tkinter.Label(self,
                         text=part[2],
-                        anchor="w", fg="white", bg="green",
+                        anchor="w", fg="white", bg=self.colors.add,
                         justify="left", font=("Fixedsys", 7)
                     )
                 elif not part[2]:
                     label = tkinter.Label(self,
                         text=part1,
-                        anchor="w", fg="white", bg="red",
+                        anchor="w", fg="white", bg=self.colors.remove,
                         justify="left", font=("Fixedsys", 7)
                     )
                 else:
                     label = tkinter.Label(self,
                         text='\n'.join(part[1:]),
-                        anchor="w", fg="white", bg="gray",
+                        anchor="w", fg="white", bg=self.colors.change,
                         justify="left", font=("Fixedsys", 7)
                     )
 
                 label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
+                self.addCleanDiffButton(row=line, diff_id = d)
+
+    def addCleanDiffButton(self, row, diff_id):
+        """
+            Create a button to revert a diff
+        """
+        self.revertButtons = []
+        bCommand = partial(self.revertDiff, diff_id=diff_id)
+        button = tkinter.Button(self, text="revert", command=bCommand, fg=self.colors.fg, bg=self.colors.bg)
+        button.grid(column=self.columns-1,row=row,sticky='E')
 
     def displayDiff(self, current_file):
         log.debug("Getting file diff")
@@ -146,6 +156,8 @@ class diffWindow(tkinter.Tk):
         else:
             self.updateDiffFrame(diff)
 
+    def revertDiff(self, diff_id):
+        self.handler.revertDiff(diff_id)
 
     def SelectFile(self, bIndex, file_name):
         current_file = self.handler.getFile(file_name)

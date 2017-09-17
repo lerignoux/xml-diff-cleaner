@@ -23,6 +23,7 @@ class XmlDiffLib(object):
     def __init__(self, source, target):
         self.source = source.splitlines(1)
         self.target = target.splitlines(1)
+        self.backup = copy.deepcopy(source)
         self.unidiffGroups = {}
         self.xmlDiffGroups = {}
         log.debug("XmlDiffLib __init__ done")
@@ -266,6 +267,11 @@ class XmlDiffLib(object):
         else:
             return res
 
+    def revertDiff(self, diff_id):
+        """
+        revert the diff associated with an id
+                """
+        return
 
 testFile1 = """
 <AnimalPersonalities>
