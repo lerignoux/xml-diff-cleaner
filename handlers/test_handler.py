@@ -3,6 +3,57 @@ import logging
 
 log = logging.getLogger(__name__)
 
+full_test = """
+<AnimalPersonalities>
+    <Duck type=Generic>
+        <hp value=200/>
+        <attack value=50/>
+    </Duck>
+    <Bear type=undead>
+        <hp value=200/>
+        <attack value=50/>
+    </Bear>
+    <Dog type=undead>
+        <hp value=100/>
+        <attack value=30 tag=1/>
+    </Dog>
+    <Lion>
+        <hp value=200/>
+        <attack value=50/>
+    </Lion>
+    <Mouse>
+    </Mouse>
+</AnimalPersonalities>
+"""
+
+full_test_base = """
+<Animal>
+    <Duck type=Generic skin=flashy>
+        <hp value=200/>
+        <attack value=40/>
+    </Duck>
+    <Bear type=undead>
+        <hp value=300/>
+        <attack value=30 tag=1/>
+    </Bear>
+    <Dog type=undead>
+        <hp value=100/>
+        <attack value=30 tag=1/>
+    </Dog>
+    <Lion>
+        <priority value=50/>
+        <hp value=200/>
+        <attack value=50/>
+        <preys>
+          <cat/>
+          <mouse/>
+        </preys>
+    </Lion>
+    <Cat>
+        <hp value=20/>
+    </Cat>
+</Animal>
+"""
 
 class testHandler(object):
 
@@ -27,6 +78,12 @@ class testHandler(object):
                          "content": "First test file with simple content\nA line that will be removed\nEnd\n"},
                 'base_file': {"filename":"base/removal.xml",
                               "content": "First test file with simple content\nEnd\n"}
+            },
+            'full' : {
+                'file': {"filename":"full.xml",
+                         "content": full_test},
+                'base_file': {"filename":"base/full.xml",
+                              "content": full_test_base}
             }
         }
 

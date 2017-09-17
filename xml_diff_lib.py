@@ -133,10 +133,12 @@ class XmlDiffLib(object):
             mask = add
         else:
             if add:
+                mask = list(mask)
                 # We combine both prints
                 for i, p in enumerate(add):
                     if p:
                         mask[i] = p
+                ''.join(mask)
         if not mask:
             raise Exception("A diff mask is required to get the xml diff")
         return mask
@@ -198,7 +200,7 @@ class XmlDiffLib(object):
 
         remains = item[4:]
         if len(remains) > 0:
-            return res + unidiffToXml(remains)
+            return res + self.unidiffToXml(remains)
         else:
             return res
 
@@ -218,7 +220,7 @@ class XmlDiffLib(object):
 
         remains = item[3:]
         if len(remains) > 0:
-            return res + unidiffToXml(remains)
+            return res + self.unidiffToXml(remains)
         else:
             return res
 
@@ -239,31 +241,32 @@ class XmlDiffLib(object):
 
         remains = item[3:]
         if len(remains) > 0:
-            return res + unidiffToXml(remains)
+            return res + self.unidiffToXml(remains)
         else:
             return res
 
     def diffRemove(self, item):
         removals = 0
-        while removals+1 <= len(item) and item[removals+1][0] == '-':
+        while removals+1 < len(item) and item[removals+1][0] == '-':
             removals +=1
         res = []
         for removed in range(removals):
             res.append(item[removed][2:])
-        if removals == len(item):
-            return res + unidiffToXml(item[removals:])
+        if removals < len(item):
+            return res + self.unidiffToXml(item[removals:])
         else:
             return res
 
     def diffAdd(self, item):
         additions = 0
-        while additions+1 <= len(items) and item[additions+1][0] == '-':
+        print("debug %s" % item)
+        while additions+1 < len(item) and item[additions+1][0] == '-':
             additions +=1
         res = []
         for added in range(additions):
             res.append(item[added][2:])
-        if removals == len(items):
-            return res + unidiffToXml(items[removals:])
+        if additions < len(item):
+            return res + self.unidiffToXml(item[additions:])
         else:
             return res
 
@@ -272,64 +275,3 @@ class XmlDiffLib(object):
         revert the diff associated with an id
                 """
         return
-
-testFile1 = """
-<AnimalPersonalities>
-    <Duck type=Generic>
-        <hp value=200/>
-        <attack value=50/>
-    </Duck>
-    <Bear type=undead>
-        <hp value=200/>
-        <attack value=50/>
-    </Bear>
-    <Dog type=undead>
-        <hp value=100/>
-        <attack value=30 tag=1/>
-    </Dog>
-    <Lion>
-        <hp value=200/>
-        <attack value=50/>
-    </Lion>
-    <Mouse>
-    </Mouse>
-</AnimalPersonalities>
-"""
-
-testFile2 = """
-<Animal>
-    <Duck type=Generic skin=flashy>
-        <hp value=200/>
-        <attack value=40/>
-    </Duck>
-    <Bear type=undead>
-        <hp value=300/>
-        <attack value=30 tag=1/>
-    </Bear>
-    <Dog type=undead>
-        <hp value=100/>
-        <attack value=30 tag=1/>
-    </Dog>
-    <Lion>
-        <priority value=50/>
-        <hp value=200/>
-        <attack value=50/>
-        <preys>
-          <cat/>
-          <mouse/>
-        </preys>
-    </Lion>
-    <Cat>
-        <hp value=20/>
-    </Cat>
-</Animal>
-"""
-
-if __name__ == "__main__":
-    print("testing XmlDiffLib")
-    diff = XmlDiffLib(testFile1, testFile2)
-    from pprint import pprint
-    diffs = diff.getDiff()
-    pprint(diffs)
-    for d in diffs:
-        pprint(diff.explainDiff(diffs[d]))
