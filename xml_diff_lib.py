@@ -78,6 +78,7 @@ class XmlDiffLib(object):
 
     def getXmlDiff(self, unidiff):
         updated = copy.deepcopy(unidiff)
+        log.debug("Converting %d diff blocks from unidiff to xml diff." % len(updated))
         for h in updated:
             try:
                 updated[h]['diff'] = self.unidiffToXml(updated[h]['diff'])
@@ -101,10 +102,10 @@ class XmlDiffLib(object):
             if re.search(handleType['regex'], diffPrint):
               return getattr(self, handleType['method'])(diff)
 
-    def getPrintIndexes(self, full_print):
+    def getPrintIndexes(self, diff_mask):
         res = []
         current_low = None
-        for i, p in enumerate(full_print):
+        for i, p in enumerate(diff_mask):
             if p != ' ':
                 if current_low is None:
                     current_low = i
@@ -115,8 +116,8 @@ class XmlDiffLib(object):
                 current_low = None
         return res
 
-    def getItemIndexes(self, item, full_print):
-        indexes = getPrintIndexes(full_print)
+    def getItemIndexes(self, item, diff_mask):
+        indexes = getPrintIndexes(diff_mask)
         res = []
         for low, high in indexes:
             while low-1 > 0 and item[low-1] != ' ':
@@ -125,6 +126,19 @@ class XmlDiffLib(object):
                 high+=1
             res.append((low, high))
 
+    def getFullMask(self, rm=None, add=None):
+        mask = rm
+        if not mask:
+            mask = add
+        else:
+            if add:
+                # We combine both prints
+                for i, p in enumerate(add):
+                    if p:
+                        mask[i] = p
+        if not mask:
+            raise Exception("A diff mask is required to get the xml diff")
+        return mask
 
     def getEditPosItem(self, old=None, rm=None, new=None, add=None):
         """
@@ -141,38 +155,29 @@ class XmlDiffLib(object):
             raise Exception("Must provide items")
         else:
             log.debug("items provided : %s" % items)
-        full_print = rm
-        if not full_print:
-            full_print = add
-        else:
-            if add:
-                # We combine both prints
-                for i, p in enumerate(add):
-                    if p:
-                        full_print[i] = p
-        if not full_print:
-            raise Exception("must provide a diff print")
-        else:
-            log.debug("print provided : %s" % full_print)
-        log.debug("Getting diff items on %s" % items)
+        diff_mask = self.getFullMask(rm=rm, add=add)
+        log.debug("mask provided : %s" % diff_mask)
         title = items.split(' ', 1)[0]
         diffs = []
-        while low < len(items):
-            log.debug(diffs)
+        while low < len(diff_mask):
+            while low < len(diff_mask) and diff_mask[low] == ' ':
+                low += 1
             high = low + 1
-            while high < len(full_print) and full_print[high] != ' ':
+            while high < len(diff_mask) and diff_mask[high] != ' ':
                 high += 1
-            log.debug(full_print[low:high])
-            if '^' in full_print[low:high]:
+            log.debug(diff_mask[low:high])
+            if '^' in diff_mask[low:high]:
                 diffs.append((title, old[low:high], new[low:high]))
                 low = high + 1
-            if '-' in full_print[low:high]:
+            if '-' in diff_mask[low:high]:
                 diffs.append((title, old[low:high], ''))
                 low = high + 1
-            if '+' in full_print[low:high]:
+            if '+' in diff_mask[low:high]:
                 diffs.append((title, '', new[low:high]))
                 low = high + 1
-            sleep(10)
+            low = high
+        log.debug("Diffs found : %s" % diffs)
+        return diffs
 
     def diffEdit(self, item):
         """
@@ -198,11 +203,10 @@ class XmlDiffLib(object):
 
     def diffRemoveValue(self, item):
         """
-        value addition, removal + other value edit
+        value removal
           -
           ?    ---       ^
           +
-          ?         ++++ ^
         fingerprint [(Added item, None, Added value),(Removed item, Removed value, None),(Changed item, old value, new value)]
         """
         old = item[0][2:]
@@ -219,9 +223,8 @@ class XmlDiffLib(object):
 
     def diffAddValue(self, item):
         """
-        value addition, removal + other value edit
+        value addition
           -
-          ?    ---       ^
           +
           ?         ++++ ^
         fingerprint [(Added item, None, Added value),(Removed item, Removed value, None),(Changed item, old value, new value)]
@@ -241,13 +244,13 @@ class XmlDiffLib(object):
 
     def diffRemove(self, item):
         removals = 0
-        while removals+1 <= len(items) and item[removals+1][0] == '-':
+        while removals+1 <= len(item) and item[removals+1][0] == '-':
             removals +=1
         res = []
         for removed in range(removals):
             res.append(item[removed][2:])
-        if removals == len(items):
-            return res + unidiffToXml(items[removals:])
+        if removals == len(item):
+            return res + unidiffToXml(item[removals:])
         else:
             return res
 
