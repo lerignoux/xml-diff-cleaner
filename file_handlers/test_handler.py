@@ -62,21 +62,21 @@ class testHandler(object):
     def __init__(self, conf):
         self.files = {
             'test' : {
-                'file': {"filename":"test.xml",
+                'base_file': {"filename":"test.xml",
                          "content": "First test file with simple content\nEnd\n"},
-                'base_file': {"filename":"base/test.xml",
+                'file': {"filename":"base/test.xml",
                               "content": "First test file has been changed with simple content\nEnd\n"}
             },
             'addition' : {
-                'file': {"filename":"addition.xml",
+                'base_file': {"filename":"addition.xml",
                          "content": "First test file with simple content\nEnd\n"},
-                'base_file': {"filename":"base/addition.xml",
+                'file': {"filename":"base/addition.xml",
                               "content": "First test file with simple content\nA new line was added\nEnd\n"}
             },
             'removal' : {
-                'file': {"filename":"removal.xml",
+                'base_file': {"filename":"removal.xml",
                          "content": "First test file with simple content\nA line that will be removed\nEnd\n"},
-                'base_file': {"filename":"base/removal.xml",
+                'file': {"filename":"base/removal.xml",
                               "content": "First test file with simple content\nEnd\n"}
             },
             'full' : {

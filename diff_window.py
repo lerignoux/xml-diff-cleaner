@@ -9,8 +9,8 @@ from functools import partial
 
 from xml_diff_lib import XmlDiffLib
 
-from handlers.test_handler import testHandler
-from handlers.p4_handler import p4Handler
+from file_handlers.test_handler import testHandler
+from file_handlers.p4_handler import p4Handler
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ class diffWindow(tkinter.Tk):
 
     def init_window(self):
         self.grid()
+        self.grid_garbage = []
 
         self.initFilesButtons()
         self.initializeDiffFrame()
@@ -74,8 +75,21 @@ class diffWindow(tkinter.Tk):
             self.filesButtons.append(tkinter.Button(self,text=file_name, command=bCommand, fg=self.colors.fg, bg=self.colors.bg))
             self.filesButtons[bIndex].grid(column=bIndex,row=0,sticky='W')
 
+        save_button = tkinter.Button(self,text="save file", command=self.saveFile, fg=self.colors.fg, bg=self.colors.bg)
+        save_button.grid(column=bIndex+1,row=0,sticky='E')
+
     def initializeDiffFrame(self):
         self.columns = len(self.handler.listFiles()) + 1
+
+    def add_to_grid(self, obj, column=0, row=0, sticky='W', columnspan=1):
+        self.grid_garbage.append(obj)
+        getattr(obj, 'grid')(column=column, row=row, sticky=sticky, columnspan=columnspan)
+
+    def clean_grid(self):
+        for obj in self.grid_garbage:
+            obj.grid_forget()
+        del self.grid_garbage
+        self.grid_garbage = []
 
     def updateUnidiffFrame(self, diffs):
         line = 0;
@@ -101,7 +115,7 @@ class diffWindow(tkinter.Tk):
                     anchor="w", fg="white", bg=bg_color,
                     justify="left", font=("Fixedsys", 7)
                 )
-                label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
+                self.add_to_grid(label, row=line, columnspan=self.columns)
 
     def updateDiffFrame(self, diffs):
         line = 0;
@@ -115,7 +129,7 @@ class diffWindow(tkinter.Tk):
                     textvariable=self.labelSourceTitle,
                     anchor="w", fg=self.colors.fg, bg=self.colors.bg
                 )
-                label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
+                self.add_to_grid(label, row=line, columnspan=self.columns)
                 self.labelSourceTitle.set(part[0])
 
                 line += 1
@@ -138,7 +152,7 @@ class diffWindow(tkinter.Tk):
                         justify="left", font=("Fixedsys", 7)
                     )
 
-                label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
+                self.add_to_grid(label, row=line, columnspan=self.columns)
                 self.addCleanDiffButton(row=line, diff_id = d)
 
     def addCleanDiffButton(self, row, diff_id):
@@ -148,25 +162,33 @@ class diffWindow(tkinter.Tk):
         self.revertButtons = []
         bCommand = partial(self.revertDiff, diff_id=diff_id)
         button = tkinter.Button(self, text="revert", command=bCommand, fg=self.colors.fg, bg=self.colors.bg)
-        button.grid(column=self.columns-1,row=row,sticky='E')
+        self.add_to_grid(button, column=self.columns-1, row=row, sticky='E')
 
-    def displayDiff(self, current_file):
+    def displayDiff(self):
+        self.clean_grid()
         log.debug("Getting file diff")
-        diff = XmlDiffLib(current_file['file']['content'],
-                          current_file['base_file']['content']).getDiff(mode=self.diff_mode)
-        log.info("Diff received %s" % diff)
+        diffs = self.currentDiffApi.getDiffs()
+        log.info("Diff received %s" % diffs)
         if self.diff_mode == 'unidiff':
-            self.updateUnidiffFrame(diff)
+            self.updateUnidiffFrame(diffs)
         else:
-            self.updateDiffFrame(diff)
+            self.updateDiffFrame(diffs)
 
     def revertDiff(self, diff_id):
-        self.handler.revertDiff(diff_id)
+        self.currentDiffApi.revertDiff(diff_id)
+        self.displayDiff()
 
     def SelectFile(self, bIndex, file_name):
         current_file = self.handler.getFile(file_name)
-        self.displayDiff(current_file)
+        self.currentDiffApi = XmlDiffLib(current_file['base_file']['content'],
+                                         current_file['file']['content'],
+                                         mode=self.diff_mode)
+        self.displayDiff()
         self.filesButtons[bIndex].focus()
+        self.current_file_name = file_name
+
+    def saveFile(self):
+        self.handler.saveFile(self.current_file_name, self.currentDiffApi.getFileContent())
 
     def IntegrateDiff(self, diff):
         return
