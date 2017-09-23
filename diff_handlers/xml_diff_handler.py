@@ -70,61 +70,36 @@ class xmlDiffHandler(diffHandler):
                 high += 1
             res.append((low, high))
 
-    def combineMasks(self, long, short):
-        if not long:
-            raise Exception("A diff mask is required to get the xml diff")
-        if not short:
-            return long
-        mask = list(long)
-        # We combine both prints
-        for i, p in enumerate(short):
-            if p in self.mask_keys:
-                mask[i] = p
-        return ''.join(mask)
-
-    def getFullMask(self, rm='', add=''):
-        if len(add) > len(rm):
-            return self.combineMasks(add, rm)
-        else:
-            return self.combineMasks(rm, add)
-
-    def getEditPosItem(self, old=None, rm=None, new=None, add=None):
+    def getTitle(self, line):
         """
-        for "1111 2222222 3333 444  55555555 6666"
-            "        ^     ---  ++            -- "
-        returns :
-        [222222, 3333, 444, 6666]
+         '+ <test value=0>' return <test
         """
-        low = 0
+        return "# {title}".format(title=line[2:].split(' ', 1)[0])
+
+    def getChanges(self, line, mask, title=True):
+        low = 2
         high = 1
-        items = old or new
-        if not items:
-            raise Exception("Must provide items")
-        else:
-            log.debug("items provided : %s" % items)
-        diff_mask = self.getFullMask(rm=rm, add=add)
-        log.debug("mask provided : %s" % diff_mask)
-        title = items.split(' ', 1)[0]
-        diffs = []
-        while low < len(diff_mask):
-            while low < len(diff_mask) and diff_mask[low] == ' ':
+        changes = [self.getTitle(line)] if title else []
+        while low < len(mask):
+            while low < len(mask) and mask[low] == ' ':
                 low += 1
             high = low + 1
-            while high < len(diff_mask) and diff_mask[high] != ' ':
+            while high < len(mask) and mask[high] != ' ':
                 high += 1
-            log.debug(diff_mask[low:high])
-            if '^' in diff_mask[low:high]:
-                diffs.append((title, old[low:high], new[low:high]))
+            log.debug(mask[low:high])
+            if '^' in mask[low:high]:
+                while line[low] != ' ':  # we want to know what value was changed
+                    low -= 1
+                changes.append('e '+line[low:high])
                 low = high + 1
-            if '-' in diff_mask[low:high]:
-                diffs.append((title, old[low:high], ''))
+            if '-' in mask[low:high]:
+                changes.append('- '+line[low:high])
                 low = high + 1
-            if '+' in diff_mask[low:high]:
-                diffs.append((title, '', new[low:high]))
+            if '+' in mask[low:high]:
+                changes.append('+ '+line[low:high])
                 low = high + 1
             low = high
-        log.debug("Diffs found : %s" % diffs)
-        return diffs
+        return changes
 
     def diffEdit(self, item):
         """
@@ -135,12 +110,12 @@ class xmlDiffHandler(diffHandler):
           ?         ++++ ^
         fingerprint [(Added item, None, Added value),(Removed item, Removed value, None),(Changed item, old value, new value)]
         """
-        old = item[0][2:]
-        rm = item[1][2:]
-        new = item[2][2:]
-        add = item[3][2:]
+        old = item[0]
+        rm = item[1]
+        new = item[2]
+        add = item[3]
 
-        res = self.getEditPosItem(old, rm, new, add)
+        res = self.getChanges(old, rm) + self.getChanges(new, add, title=False)
 
         remains = item[4:]
         if len(remains) > 0:
@@ -156,11 +131,11 @@ class xmlDiffHandler(diffHandler):
           +
         fingerprint [(Added item, None, Added value),(Removed item, Removed value, None),(Changed item, old value, new value)]
         """
-        old = item[0][2:]
-        rm = item[1][2:]
-        new = item[2][2:]
+        old = item[0]
+        rm = item[1]
+        # new = item[2]
 
-        res = self.getEditPosItem(old, rm, new, None)
+        res = self.getChanges(old, rm)
 
         remains = item[3:]
         if len(remains) > 0:
@@ -177,11 +152,11 @@ class xmlDiffHandler(diffHandler):
         fingerprint [(Added item, None, Added value),(Removed item, Removed value, None),(Changed item, old value, new value)]
         """
         log.debug("diffAddValue found")
-        old = item[0][2:]
-        new = item[1][2:]
-        add = item[2][2:]
+        # old = item[0]
+        new = item[1]
+        add = item[2]
 
-        res = self.getEditPosItem(old, None, new, add)
+        res = self.getChanges(new, add)
 
         remains = item[3:]
         if len(remains) > 0:
@@ -195,7 +170,7 @@ class xmlDiffHandler(diffHandler):
             removals += 1
         res = []
         for removed in range(removals):
-            res.append(item[removed][2:])
+            res.append(item[removed])
         if removals < len(item):
             return res + self.unidiffToXml(item[removals:])
         else:
@@ -208,7 +183,7 @@ class xmlDiffHandler(diffHandler):
             additions += 1
         res = []
         for added in range(additions):
-            res.append(item[added][2:])
+            res.append(item[added])
         if additions < len(item):
             return res + self.unidiffToXml(item[additions:])
         else:

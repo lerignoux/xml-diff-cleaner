@@ -91,7 +91,7 @@ class diffWindow(tkinter.Tk):
         del self.grid_garbage
         self.grid_garbage = []
 
-    def updateUnidiffFrame(self, diffs):
+    def updateDiffFrame(self, diffs):
         line = 0
         for d in diffs:
             line += 1
@@ -111,53 +111,16 @@ class diffWindow(tkinter.Tk):
                     bg_color = self.colors.add
                 if line_diff[0] == '-':
                     bg_color = self.colors.remove
+                if line_diff[0] == 'e':
+                    bg_color = self.colors.edit
+                if line_diff[0] == '#':
+                    bg_color = bg_color
                 label = tkinter.Label(
                     self,
                     text=line_diff,
                     anchor="w", fg="white", bg=bg_color,
                     justify="left", font=("Fixedsys", 7)
                 )
-                self.add_to_grid(label, row=line, columnspan=self.columns)
-
-    def updateDiffFrame(self, diffs):
-        line = 0
-        print(diffs)
-        for d in diffs:
-            for part in diffs[d]['diff']:
-                # part is a tupple: (name, removed, added)
-                line += 1
-                self.labelSourceTitle = tkinter.StringVar()
-                label = tkinter.Label(
-                    self,
-                    textvariable=self.labelSourceTitle,
-                    anchor="w", fg=self.colors.fg, bg=self.colors.bg
-                )
-                self.add_to_grid(label, row=line, columnspan=self.columns)
-                self.labelSourceTitle.set(part[0])
-
-                line += 1
-                if not part[1]:
-                    label = tkinter.Label(
-                        self,
-                        text=part[2],
-                        anchor="w", fg="white", bg=self.colors.add,
-                        justify="left", font=("Fixedsys", 7)
-                    )
-                elif not part[2]:
-                    label = tkinter.Label(
-                        self,
-                        text=part[1],
-                        anchor="w", fg="white", bg=self.colors.remove,
-                        justify="left", font=("Fixedsys", 7)
-                    )
-                else:
-                    label = tkinter.Label(
-                        self,
-                        text='\n'.join(part[1:]),
-                        anchor="w", fg="white", bg=self.colors.change,
-                        justify="left", font=("Fixedsys", 7)
-                    )
-
                 self.add_to_grid(label, row=line, columnspan=self.columns)
                 self.addCleanDiffButton(row=line, diff_id=d)
 
@@ -175,10 +138,7 @@ class diffWindow(tkinter.Tk):
         log.debug("Getting file diff")
         diffs = self.currentDiffApi.getDiffs()
         log.info("Diff received %s" % diffs)
-        if self.diff_mode == 'unidiff':
-            self.updateUnidiffFrame(diffs)
-        else:
-            self.updateDiffFrame(diffs)
+        self.updateDiffFrame(diffs)
 
     def revertDiff(self, diff_id):
         self.currentDiffApi.revertDiff(diff_id)
