@@ -13,6 +13,8 @@ class NoCleanDiffException(Exception):
 
 class xmlDiffHandler(diffHandler):
 
+    mask_keys = ['^', '+', '-']
+
     def getDiffBase(self):
         return unidiffHandler(self.source, self.target).getDiffs()
 
@@ -30,19 +32,19 @@ class xmlDiffHandler(diffHandler):
 
     def unidiffToXml(self, diff):
         handles = [
-            {'regex':r"\-\?\+\?", 'method': 'diffEdit'},  # edit
-            {'regex':r"\-\?\+", 'method': 'diffRemoveValue'},  # values removed
-            {'regex':r"\-\+\?", 'method': 'diffAddValue'},  # values added
-            {'regex':r"\-+", 'method': 'diffRemove'},  # lines removed
-            {'regex':r"\++", 'method': 'diffAdd'},  # lines added
+            {'regex': r"\-\?\+\?", 'method': 'diffEdit'},  # edit
+            {'regex': r"\-\?\+", 'method': 'diffRemoveValue'},  # values removed
+            {'regex': r"\-\+\?", 'method': 'diffAddValue'},  # values added
+            {'regex': r"\-+", 'method': 'diffRemove'},  # lines removed
+            {'regex': r"\++", 'method': 'diffAdd'},  # lines added
         ]
         while len(diff) > 0:
-          log.debug("Current diff length : %d" % len(diff))
-          diffPrint = ''.join([line[0] for line in diff])
-          log.debug("current diff print %s" % diffPrint)
-          for handleType in handles:
-            if re.search(handleType['regex'], diffPrint):
-              return getattr(self, handleType['method'])(diff)
+            log.debug("Current diff length : %d" % len(diff))
+            diffPrint = ''.join([line[0] for line in diff])
+            log.debug("current diff print %s" % diffPrint)
+            for handleType in handles:
+                if re.search(handleType['regex'], diffPrint):
+                    return getattr(self, handleType['method'])(diff)
 
     def getPrintIndexes(self, diff_mask):
         res = []
@@ -59,30 +61,32 @@ class xmlDiffHandler(diffHandler):
         return res
 
     def getItemIndexes(self, item, diff_mask):
-        indexes = getPrintIndexes(diff_mask)
+        indexes = self.getPrintIndexes(diff_mask)
         res = []
         for low, high in indexes:
             while low-1 > 0 and item[low-1] != ' ':
-                low-=1
+                low -= 1
             while high < len(item) and item[high+1] != ' ':
-                high+=1
+                high += 1
             res.append((low, high))
 
-    def getFullMask(self, rm=None, add=None):
-        mask = rm
-        if not mask:
-            mask = add
-        else:
-            if add:
-                mask = list(mask)
-                # We combine both prints
-                for i, p in enumerate(add):
-                    if p:
-                        mask[i] = p
-                ''.join(mask)
-        if not mask:
+    def combineMasks(self, long, short):
+        if not long:
             raise Exception("A diff mask is required to get the xml diff")
-        return mask
+        if not short:
+            return long
+        mask = list(long)
+        # We combine both prints
+        for i, p in enumerate(short):
+            if p in self.mask_keys:
+                mask[i] = p
+        return ''.join(mask)
+
+    def getFullMask(self, rm='', add=''):
+        if len(add) > len(rm):
+            return self.combineMasks(add, rm)
+        else:
+            return self.combineMasks(rm, add)
 
     def getEditPosItem(self, old=None, rm=None, new=None, add=None):
         """
@@ -91,7 +95,6 @@ class xmlDiffHandler(diffHandler):
         returns :
         [222222, 3333, 444, 6666]
         """
-        from time import sleep
         low = 0
         high = 1
         items = old or new
@@ -187,9 +190,9 @@ class xmlDiffHandler(diffHandler):
             return res
 
     def diffRemove(self, item):
-        removals = 0
+        removals = 1
         while removals+1 < len(item) and item[removals+1][0] == '-':
-            removals +=1
+            removals += 1
         res = []
         for removed in range(removals):
             res.append(item[removed][2:])
@@ -199,10 +202,10 @@ class xmlDiffHandler(diffHandler):
             return res
 
     def diffAdd(self, item):
-        additions = 0
+        additions = 1
         print("debug %s" % item)
         while additions+1 < len(item) and item[additions+1][0] == '-':
-            additions +=1
+            additions += 1
         res = []
         for added in range(additions):
             res.append(item[added][2:])

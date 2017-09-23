@@ -31,7 +31,10 @@ class diffHandler(object):
         log.debug("reverting diff: %s" % diff)
         for i in diff['indexes']:
             log.debug("reverting to: %s" % (self.source[i['target_index']:(i['target_index']+i['target_length'])]))
-            self.target = self.target[:i['source_index']] + self.source[i['target_index']:(i['target_index']+i['target_length'])] + self.target[i['source_index']+i['source_length']:]
+            before = self.target[:i['source_index']]
+            changed = self.source[i['target_index']:(i['target_index']+i['target_length'])]
+            after = self.target[i['source_index']+i['source_length']:]
+            self.target = before + changed + after
         log.debug("Target after revert: %s" % self.target)
 
     def getTarget(self):

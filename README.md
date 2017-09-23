@@ -10,3 +10,8 @@ python3 diff_cleaner.py
 A first prototype.
 this will only list small unitary changes and enable to revert them
 Will work only on XML like files in a first time
+
+## Unittest:
+```
+python -m tests.xml_diff_handler_test
+```

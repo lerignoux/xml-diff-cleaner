@@ -55,35 +55,30 @@ full_test_base = """
 </Animal>
 """
 
+
 class testHandler(object):
 
     name = 'test'
 
     def __init__(self, conf):
         self.files = {
-            'test' : {
-                'base_file': {"filename":"test.xml",
-                         "content": "First test file with simple content\nEnd\n"},
-                'file': {"filename":"base/test.xml",
-                              "content": "First test file has been changed with simple content\nEnd\n"}
+            'test': {
+                'base_file': {"filename": "test.xml", "content": "First test file with simple content\nEnd\n"},
+                'file': {"filename": "base/test.xml", "content": "First test file has been changed with simple content\nEnd\n"}
             },
-            'addition' : {
-                'base_file': {"filename":"addition.xml",
-                         "content": "First test file with simple content\nEnd\n"},
-                'file': {"filename":"base/addition.xml",
-                              "content": "First test file with simple content\nA new line was added\nEnd\n"}
+            'addition': {
+                'base_file': {"filename": "addition.xml", "content": "First test file with simple content\nEnd\n"},
+                'file': {"filename": "base/addition.xml",
+                         "content": "First test file with simple content\nA new line was added\nEnd\n"}
             },
-            'removal' : {
-                'base_file': {"filename":"removal.xml",
-                         "content": "First test file with simple content\nA line that will be removed\nEnd\n"},
-                'file': {"filename":"base/removal.xml",
-                              "content": "First test file with simple content\nEnd\n"}
+            'removal': {
+                'base_file': {"filename": "removal.xml",
+                              "content": "First test file with simple content\nA line that will be removed\nEnd\n"},
+                'file': {"filename": "base/removal.xml",  "content": "First test file with simple content\nEnd\n"}
             },
-            'full' : {
-                'file': {"filename":"full.xml",
-                         "content": full_test},
-                'base_file': {"filename":"base/full.xml",
-                              "content": full_test_base}
+            'full': {
+                'file': {"filename": "full.xml", "content": full_test},
+                'base_file': {"filename": "base/full.xml", "content": full_test_base}
             }
         }
 
@@ -106,7 +101,7 @@ class testHandler(object):
         """
         Save the file after diff cleaning
         """
-        log.info("saving file %s: %s" %(file_name, file_content))
+        log.info("saving file %s: %s" % (file_name, file_content))
 
     def refresh(self):
         return

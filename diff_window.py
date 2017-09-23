@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import json
 import logging
-import re
-import sys
 import tkinter
 
 from functools import partial
@@ -23,6 +21,7 @@ def get_handler(handler_name):
     else:
         raise Exception("unsupported handler")
 
+
 class Colors(object):
     bg = "#555555"
     fg = "#eeeeee"
@@ -33,6 +32,7 @@ class Colors(object):
     def __init__(self, conf):
         for color in conf:
             setattr(self, color, conf[color])
+
 
 class diffWindow(tkinter.Tk):
     def __init__(self, parent, handler, diff_mode='xml'):
@@ -61,7 +61,7 @@ class diffWindow(tkinter.Tk):
         self.initializeDiffFrame()
 
         # self.grid_columnconfigure(0,weight=1)
-        self.resizable(True,True)
+        self.resizable(True, True)
         self.update()
         self.geometry(self.geometry())
 
@@ -72,11 +72,11 @@ class diffWindow(tkinter.Tk):
         self.filesButtons = []
         for bIndex, file_name in enumerate(self.handler.listFiles()):
             bCommand = partial(self.SelectFile, bIndex=bIndex, file_name=file_name)
-            self.filesButtons.append(tkinter.Button(self,text=file_name, command=bCommand, fg=self.colors.fg, bg=self.colors.bg))
-            self.filesButtons[bIndex].grid(column=bIndex,row=0,sticky='W')
+            self.filesButtons.append(tkinter.Button(self, text=file_name, command=bCommand, fg=self.colors.fg, bg=self.colors.bg))
+            self.filesButtons[bIndex].grid(column=bIndex, row=0, sticky='W')
 
-        save_button = tkinter.Button(self,text="save file", command=self.saveFile, fg=self.colors.fg, bg=self.colors.bg)
-        save_button.grid(column=bIndex+1,row=0,sticky='E')
+        save_button = tkinter.Button(self, text="save file", command=self.saveFile, fg=self.colors.fg, bg=self.colors.bg)
+        save_button.grid(column=bIndex+1, row=0, sticky='E')
 
     def initializeDiffFrame(self):
         self.columns = len(self.handler.listFiles()) + 1
@@ -92,15 +92,16 @@ class diffWindow(tkinter.Tk):
         self.grid_garbage = []
 
     def updateUnidiffFrame(self, diffs):
-        line = 0;
+        line = 0
         for d in diffs:
             line += 1
             self.labelSourceTitle = tkinter.StringVar()
-            label = tkinter.Label(self,
+            label = tkinter.Label(
+                self,
                 textvariable=self.labelSourceTitle,
                 anchor="w", fg=self.colors.fg, bg=self.colors.bg
             )
-            label.grid(column=0,row=line,columnspan=self.columns,sticky='W')
+            label.grid(column=0, row=line, columnspan=self.columns, sticky='W')
             self.labelSourceTitle.set(u"Diff :")
 
             for line_diff in diffs[d]['diff']:
@@ -110,7 +111,8 @@ class diffWindow(tkinter.Tk):
                     bg_color = self.colors.add
                 if line_diff[0] == '-':
                     bg_color = self.colors.remove
-                label = tkinter.Label(self,
+                label = tkinter.Label(
+                    self,
                     text=line_diff,
                     anchor="w", fg="white", bg=bg_color,
                     justify="left", font=("Fixedsys", 7)
@@ -118,14 +120,15 @@ class diffWindow(tkinter.Tk):
                 self.add_to_grid(label, row=line, columnspan=self.columns)
 
     def updateDiffFrame(self, diffs):
-        line = 0;
+        line = 0
         print(diffs)
         for d in diffs:
             for part in diffs[d]['diff']:
                 # part is a tupple: (name, removed, added)
                 line += 1
                 self.labelSourceTitle = tkinter.StringVar()
-                label = tkinter.Label(self,
+                label = tkinter.Label(
+                    self,
                     textvariable=self.labelSourceTitle,
                     anchor="w", fg=self.colors.fg, bg=self.colors.bg
                 )
@@ -134,26 +137,29 @@ class diffWindow(tkinter.Tk):
 
                 line += 1
                 if not part[1]:
-                    label = tkinter.Label(self,
+                    label = tkinter.Label(
+                        self,
                         text=part[2],
                         anchor="w", fg="white", bg=self.colors.add,
                         justify="left", font=("Fixedsys", 7)
                     )
                 elif not part[2]:
-                    label = tkinter.Label(self,
-                        text=part1,
+                    label = tkinter.Label(
+                        self,
+                        text=part[1],
                         anchor="w", fg="white", bg=self.colors.remove,
                         justify="left", font=("Fixedsys", 7)
                     )
                 else:
-                    label = tkinter.Label(self,
+                    label = tkinter.Label(
+                        self,
                         text='\n'.join(part[1:]),
                         anchor="w", fg="white", bg=self.colors.change,
                         justify="left", font=("Fixedsys", 7)
                     )
 
                 self.add_to_grid(label, row=line, columnspan=self.columns)
-                self.addCleanDiffButton(row=line, diff_id = d)
+                self.addCleanDiffButton(row=line, diff_id=d)
 
     def addCleanDiffButton(self, row, diff_id):
         """
